@@ -43,14 +43,25 @@ def build_camera_matrices(data_dict):
     Each dict contains a quaternion and translation coordinates.
 
     See https://en.wikipedia.org/wiki/Camera_matrix for reference.
+
+    See as well https://github.com/colmap/colmap/issues/797#issuecomment-583592418
     """
     cameras = []
 
     for i in range(len(data_dict)):
         camera_matrix = quaternion_to_matrix(data_dict[i])
-        camera_matrix[0, 3] = data_dict[i]['tx']
-        camera_matrix[1, 3] = data_dict[i]['ty']
-        camera_matrix[2, 3] = data_dict[i]['tz']
+
+        rotation = np.copy(camera_matrix[:3, :3])  # copy to be safe, is it necessary?
+
+
+        translation = np.array([[data_dict[i]['tx']],
+                                [data_dict[i]['ty']],
+                                [data_dict[i]['tz']]])
+        translation = - np.matmul(rotation.T, translation)
+        translation = translation.squeeze()
+
+        camera_matrix[:3, :3] = rotation.T
+        camera_matrix[:3, 3] = translation
 
         cameras.append(camera_matrix)
 
