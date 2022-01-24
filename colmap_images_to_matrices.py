@@ -57,9 +57,9 @@ if not os.path.exists(args.save_folder):
     os.makedirs(args.save_folder)
 
 for i, camera in enumerate(cameras):
-    file_name = os.path.join(args.save_folder, names[i])
+    file_name = os.path.join(args.save_folder, names[i]) + '.txt'
     with open(file_name, 'w') as f:
         for row in cameras[i]:
             to_write = ' '.join(str(x) for x in row)
-        f.write(to_write)
-        f.write('\n')
+            f.write(to_write)
+            f.write('\n')
