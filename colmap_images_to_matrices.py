@@ -4,7 +4,7 @@ import argparse
 
 from src.cameras_positions import quaternion_to_matrix, build_camera_matrices
 
-parser = argparse.ArgumentParser(description='Training parser')
+parser = argparse.ArgumentParser(description='Parser')
 
 parser.add_argument('--path',
                     help='Path to a images.txt file from colmap',
@@ -57,6 +57,7 @@ if not os.path.exists(args.save_folder):
     os.makedirs(args.save_folder)
 
 for i, camera in enumerate(cameras):
+    print(camera)
     file_name = os.path.join(args.save_folder, names[i]) + '.txt'
     with open(file_name, 'w') as f:
         for row in cameras[i]:
