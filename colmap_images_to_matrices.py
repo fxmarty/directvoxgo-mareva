@@ -30,12 +30,14 @@ for i in range(4, len(lines)):
         camera_data = lines[i]
         camera_data = camera_data.split(' ')
 
-        photo_name = camera_data[-1]
+        # remove the file extension
+        photo_name = os.path.splitext(camera_data[-1])[0]
 
         # we don't care about the image id, camera ID is always 1
         camera_data = camera_data[1:-2]
         camera_data = [float(x) for x in camera_data]
         data.append(camera_data)
+        names.append(photo_name)
 
 data_dict = []
 for i, camera_data in enumerate(data):
@@ -50,3 +52,14 @@ for i, camera_data in enumerate(data):
     data_dict.append(camera_dict)
 
 cameras = build_camera_matrices(data_dict)
+
+if not os.path.exists(args.save_folder):
+    os.makedirs(args.save_folder)
+
+for i, camera in enumerate(cameras):
+    file_name = os.path.join(args.save_folder, names[i])
+    with open(file_name, 'w') as f:
+        for row in cameras[i]:
+            to_write = ' '.join(str(x) for x in row)
+        f.write(to_write)
+        f.write('\n')
