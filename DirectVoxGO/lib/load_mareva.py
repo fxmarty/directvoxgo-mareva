@@ -35,7 +35,7 @@ def pose_spherical(theta, phi, radius):
     return c2w
 
 
-def load_blendedmvs_data(basedir):
+def load_mareva_data(basedir):
     pose_paths = sorted(glob.glob(os.path.join(basedir, 'pose', '*txt')))
     rgb_paths = sorted(glob.glob(os.path.join(basedir, 'rgb', '*png')))
 
