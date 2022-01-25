@@ -501,10 +501,11 @@ if __name__=='__main__':
 
     # train
     if not args.render_only:
-        cfg.misc = {'HW': data_dict['HW'][0],
-                    'K': data_dict['Ks'][0],
-                    'near': data_dict['near'],
-                    'far': data_dict['far']}
+        np.savez(os.path.join(cfg.basedir, cfg.expname, 'params.npz'),
+                 HW=data_dict['HW'][0],
+                 K=data_dict['Ks'][0],
+                 near=data_dict['near'],
+                 far=data_dict['far'])
         train(args, cfg, data_dict)
 
     # load model for rendring
