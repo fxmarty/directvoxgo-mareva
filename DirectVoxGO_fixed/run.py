@@ -81,24 +81,22 @@ def render_viewpoints(model, render_poses, HW, Ks, ndc, render_kwargs,
         rays_o, rays_d, viewdirs = dvgo.get_rays_of_a_view(
                 H, W, K, c2w, ndc, inverse_y=render_kwargs['inverse_y'],
                 flip_x=cfg.data.flip_x, flip_y=cfg.data.flip_y)
-        keys = ['rgb_marched']
-        rays_o = rays_o.flatten(0,-2)
-        rays_d = rays_d.flatten(0,-2)
-        viewdirs = viewdirs.flatten(0,-2)
+        keys = ['rgb_marched', 'disp']
         render_result_chunks = [
             {k: v for k, v in model(ro, rd, vd, **render_kwargs).items() if k in keys}
-            for ro, rd, vd in zip(rays_o.split(65536, 0), rays_d.split(65536, 0), viewdirs.split(65536, 0))
+            for ro, rd, vd in zip(rays_o.split(16, 0), rays_d.split(16, 0), viewdirs.split(16, 0))
         ]
         render_result = {
-            k: torch.cat([ret[k] for ret in render_result_chunks]).reshape(H,W,-1)
+            k: torch.cat([ret[k] for ret in render_result_chunks])
             for k in render_result_chunks[0].keys()
         }
         rgb = render_result['rgb_marched'].cpu().numpy()
+        disp = render_result['disp'].cpu().numpy()
 
         rgbs.append(rgb)
-        #disps.append(disp)
+        disps.append(disp)
         if i==0:
-            print('Testing', rgb.shape)
+            print('Testing', rgb.shape, disp.shape)
 
         if gt_imgs is not None and render_factor==0:
             p = -10. * np.log10(np.mean(np.square(rgb - gt_imgs[i])))
@@ -110,22 +108,24 @@ def render_viewpoints(model, render_poses, HW, Ks, ndc, render_kwargs,
             if eval_lpips_vgg:
                 lpips_vgg.append(utils.rgb_lpips(rgb, gt_imgs[i], net_name='vgg', device=c2w.device))
 
-    if len(psnrs):
-        print('Testing psnr', np.mean(psnrs), '(avg)')
-        if eval_ssim: print('Testing ssim', np.mean(ssims), '(avg)')
-        if eval_lpips_vgg: print('Testing lpips (vgg)', np.mean(lpips_vgg), '(avg)')
-        if eval_lpips_alex: print('Testing lpips (alex)', np.mean(lpips_alex), '(avg)')
-
-    if savedir is not None:
-        print(f'Writing images to {savedir}')
-        for i in trange(len(rgbs)):
-            rgb8 = utils.to8b(rgbs[i])
+        if savedir is not None:
+            rgb8 = utils.to8b(rgbs[-1])
             filename = os.path.join(savedir, '{:03d}.png'.format(i))
             imageio.imwrite(filename, rgb8)
 
     rgbs = np.array(rgbs)
-    #disps = np.array(disps)
-    disps = np.zeros_like(rgbs)
+    disps = np.array(disps)
+    if len(psnrs):
+        '''
+        print('Testing psnr', [f'{p:.3f}' for p in psnrs])
+        if eval_ssim: print('Testing ssim', [f'{p:.3f}' for p in ssims])
+        if eval_lpips_vgg: print('Testing lpips (vgg)', [f'{p:.3f}' for p in lpips_vgg])
+        if eval_lpips_alex: print('Testing lpips (alex)', [f'{p:.3f}' for p in lpips_alex])
+        '''
+        print('Testing psnr', np.mean(psnrs), '(avg)')
+        if eval_ssim: print('Testing ssim', np.mean(ssims), '(avg)')
+        if eval_lpips_vgg: print('Testing lpips (vgg)', np.mean(lpips_vgg), '(avg)')
+        if eval_lpips_alex: print('Testing lpips (alex)', np.mean(lpips_alex), '(avg)')
 
     return rgbs, disps
 
@@ -353,13 +353,13 @@ def scene_rep_reconstruction(args, cfg, cfg_model, cfg_train, xyz_min, xyz_max, 
         # gradient descent step
         optimizer.zero_grad(set_to_none=True)
         loss = cfg_train.weight_main * F.mse_loss(render_result['rgb_marched'], target)
-        psnr = utils.mse2psnr(loss.detach())
+        psnr = utils.mse2psnr(loss.detach()).item()
         if cfg_train.weight_entropy_last > 0:
             pout = render_result['alphainv_last'].clamp(1e-6, 1-1e-6)
             entropy_last_loss = -(pout*torch.log(pout) + (1-pout)*torch.log(1-pout)).mean()
             loss += cfg_train.weight_entropy_last * entropy_last_loss
         if cfg_train.weight_rgbper > 0:
-            rgbper = (render_result['raw_rgb'] - target[render_result['ray_id']]).pow(2).sum(-1)
+            rgbper = (render_result['raw_rgb'] - target[render_result['bin_id']]).pow(2).sum(-1)
             rgbper_loss = (rgbper * render_result['weights'].detach()).sum() / len(rays_o)
             loss += cfg_train.weight_rgbper * rgbper_loss
         if cfg_train.weight_tv_density>0 and global_step>cfg_train.tv_from and global_step%cfg_train.tv_every==0:
@@ -368,7 +368,7 @@ def scene_rep_reconstruction(args, cfg, cfg_model, cfg_train, xyz_min, xyz_max, 
             loss += cfg_train.weight_tv_k0 * model.k0_total_variation()
         loss.backward()
         optimizer.step()
-        psnr_lst.append(psnr.item())
+        psnr_lst.append(psnr)
 
         # update lr
         decay_steps = cfg_train.lrate_decay * 1000
@@ -390,6 +390,7 @@ def scene_rep_reconstruction(args, cfg, cfg_model, cfg_train, xyz_min, xyz_max, 
             torch.save({
                 'global_step': global_step,
                 'model_kwargs': model.get_kwargs(),
+                'MaskCache_kwargs': model.get_MaskCache_kwargs(),
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }, path)
@@ -399,6 +400,7 @@ def scene_rep_reconstruction(args, cfg, cfg_model, cfg_train, xyz_min, xyz_max, 
         torch.save({
             'global_step': global_step,
             'model_kwargs': model.get_kwargs(),
+            'MaskCache_kwargs': model.get_MaskCache_kwargs(),
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
         }, last_ckpt_path)
@@ -506,6 +508,7 @@ if __name__=='__main__':
                  K=data_dict['Ks'][0],
                  near=data_dict['near'],
                  far=data_dict['far'])
+
         train(args, cfg, data_dict)
 
     # load model for rendring

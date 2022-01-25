@@ -47,7 +47,6 @@ coarse_train = dict(
     weight_tv_density=0.0,        # weight of total variation loss of density voxel grid
     weight_tv_k0=0.0,             # weight of total variation loss of color/feature voxel grid
     pg_scale=[],                  # checkpoints for progressive scaling
-    skip_zero_grad_fields=[],
 )
 
 fine_train = deepcopy(coarse_train)
@@ -58,7 +57,6 @@ fine_train.update(dict(
     weight_entropy_last=0.001,
     weight_rgbper=0.01,
     pg_scale=[1000, 2000, 3000],
-    skip_zero_grad_fields=['density', 'k0'],
 ))
 
 ''' Template of model and rendering options

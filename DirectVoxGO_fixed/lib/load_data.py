@@ -181,4 +181,3 @@ def inward_nearfar_heuristic(cam_o, ratio=0.05):
     far = dist.max()
     near = far * ratio
     return near, far
-
