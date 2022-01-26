@@ -39,7 +39,7 @@ def pose_spherical(theta, phi, radius):
 theta, phi, radius = 0.0, 0.0, 1.
 
 
-def Interaction(img, fullscreen = False)
+def Interaction(fullscreen = False)
     window_title = '3D Interaction'
     if fullscreen:
         cv2.namedWindow(window_title, cv2.WND_PROP_FULLSCREEN)
