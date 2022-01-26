@@ -2,17 +2,25 @@
 
 DirectVoxGO (Direct Voxel Grid Optimization, see our [paper](https://arxiv.org/abs/2111.11215)) reconstructs a scene representation from a set of calibrated images capturing the scene.
 - **NeRF-comparable quality** for synthesizing novel views from our scene representation.
-- **Super-fast convergence**: Our **`15 mins/scene`** vs. NeRF's `10~20+ hrs/scene`.
+- **Super-fast convergence**: Our **`15 mins/scene`** vs. NeRF's `10~20+ hrs/scene`. The newest version further improved speed by **1.8\~3.5**x. Still working on improving it...
 - **No cross-scene pre-training required**: We optimize each scene from scratch.
-- **Better rendering speed**: Our **`<1 secs`** vs. NeRF's `29 secs` to synthesize a `800x800` images.
+- **Better rendering speed**: Our **`0.36~0.07 secs`** vs. NeRF's `29 secs` to synthesize a `800x800` images.
 
-Below run-times (*mm:ss*) of our optimization progress are measured on a machine with a single RTX 2080 Ti GPU.
+The newly implemented cuda extension is built just-in-time by pytorch at the first time you run the code.
+
+Below run-times (*mm:ss*) of our optimization progress are measured on a machine with a single RTX 2080 Ti GPU. The run-times are old, the training speed is improved in the newer version.
 
 https://user-images.githubusercontent.com/2712505/142961346-82cd84f5-d46e-4cfc-bce5-2bbb78f16272.mp4
 
 ### Update
+- 2022.01.23: Improving training speed by **1.8\~3.5**x (see [report](IMPROVING_LOG.md)). Some intermediate steps are re-implemented in cuda but not fully fused---flexible but sacrficing speed.
 - 2021.11.23: Support CO3D dataset.
 - 2021.11.23: Initial release.
+
+### Next todo
+- Implement total variation loss in cuda.
+- Sparse voxel structure.
+- Extend to more scenario (forward-facing, unbounded 360).
 
 ### Installation
 ```
@@ -203,6 +211,7 @@ Only `stepsize` is tunable in testing phase, while all the other fields should r
 
 [VaxNeRF](https://github.com/naruya/VaxNeRF) use Visual Hull to speedup NeRF training. Only 30 lines of code modification are required based on existing NeRF code base.
 
+[Instant-ngp](https://github.com/NVlabs/instant-ngp) use hash table to store the grid values. The collision is alleviated by multi-resolution (conceptual) grids and the follow-up MLP can handle the collision effecitvely. The efficient cuda implementation improve speed as well.
 
 ## Acknowledgement
 The code base is origined from an awesome [nerf-pytorch](https://github.com/yenchenlin/nerf-pytorch) implementation, but it becomes very different from the code base now.

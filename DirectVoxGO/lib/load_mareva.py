@@ -37,7 +37,7 @@ def pose_spherical(theta, phi, radius):
 
 def load_mareva_data(basedir):
     pose_paths = sorted(glob.glob(os.path.join(basedir, 'pose', '*txt')))
-    rgb_paths = sorted(glob.glob(os.path.join(basedir, 'rgb', '*png')))
+    rgb_paths = sorted(glob.glob(os.path.join(basedir, 'rgb', '*jpg')))
 
     all_poses = []
     all_imgs = []

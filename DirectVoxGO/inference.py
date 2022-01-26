@@ -15,11 +15,6 @@ parser.add_argument('--config',
                     required=True,
                     help='path to .py config file for the experiment')
 
-parser.add_argument("--model",
-                    type=str,
-                    default=None,
-                    help='specific weights npy file to reload for coarse network')
-
 parser.add_argument("--coarse",
                     action='store_true',
                     help='Use coarse model')
