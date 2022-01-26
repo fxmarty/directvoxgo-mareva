@@ -410,7 +410,6 @@ def train(args, cfg, data_dict):
     # init
     print('train: start')
     eps_time = time.time()
-    os.makedirs(os.path.join(cfg.basedir, cfg.expname), exist_ok=True)
     with open(os.path.join(cfg.basedir, cfg.expname, 'args.txt'), 'w') as file:
         for arg in sorted(vars(args)):
             attr = getattr(args, arg)
@@ -501,6 +500,12 @@ if __name__=='__main__':
 
     # train
     if not args.render_only:
+        os.makedirs(os.path.join(cfg.basedir, cfg.expname), exist_ok=True)
+        np.savez(os.path.join(cfg.basedir, cfg.expname, 'params.npz'),
+                 HW=data_dict['HW'][0],
+                 K=data_dict['Ks'][0],
+                 near=data_dict['near'],
+                 far=data_dict['far'])
         train(args, cfg, data_dict)
 
     # load model for rendring
@@ -508,7 +513,8 @@ if __name__=='__main__':
         if args.ft_path:
             ckpt_path = args.ft_path
         else:
-            ckpt_path = os.path.join(cfg.basedir, cfg.expname, 'fine_last.tar')
+            #ckpt_path = os.path.join(cfg.basedir, cfg.expname, 'fine_last.tar')
+            ckpt_path = os.path.join(cfg.basedir, cfg.expname, 'coarse_last.tar')
         ckpt_name = ckpt_path.split('/')[-1][:-4]
         model = utils.load_model(dvgo.DirectVoxGO, ckpt_path).to(device)
         stepsize = cfg.fine_model_and_render.stepsize

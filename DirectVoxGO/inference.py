@@ -8,6 +8,8 @@ from lib import utils
 
 from lib.utils_inference import render_viewpoint
 
+import numpy as np
+
 
 parser = argparse.ArgumentParser(description='Parser')
 
@@ -44,12 +46,16 @@ else:
 print('Loading model...')
 model = utils.load_model(dvgo.DirectVoxGO, ckpt_path).to(device)
 
+parent_exp_folder = os.path.split(args.config)[0]
+params = np.load(os.path.join(parent_exp_folder, 'params.npz'))
+
+
 render_viewpoints_kwargs = {
     'model': model,
     'ndc': cfg.data.ndc,
     'render_kwargs': {
-        'near': cfg.misc['near'],
-        'far': cfg.misc['far'],
+        'near': params['near'],
+        'far': params['far'],
         'bg': 1 if cfg.data.white_bkgd else 0,
         'stepsize': stepsize,
         'inverse_y': cfg.data.inverse_y,
@@ -61,12 +67,21 @@ render_viewpoints_kwargs = {
 print('WARNING: all training images assumed to be of same shape')
 
 #TODO define
-# render_pose =
-K = cfg.misc['K']
-HW = cfg.misc['HW']
+pose_path = '/home/felix/Documents/Mines/3A/Option/Mini-projet/directvoxgo-mareva/DirectVoxGO/data/BlendedMVS/Jade/pose/1_0000_00000011.txt'
+render_pose = np.loadtxt(pose_path).astype(np.float32)
 
+K = params['K']
+HW = params['HW']
+
+render_pose = torch.Tensor(render_pose)
 
 rgb = render_viewpoint(render_pose=render_pose,
                        HW=HW,
                        K=K,
+                       cfg=cfg,
                        **render_viewpoints_kwargs)
+
+import imageio
+rgb8 = utils.to8b(rgb)
+filename = 'teeest.jpg'
+imageio.imwrite(filename, rgb8)
