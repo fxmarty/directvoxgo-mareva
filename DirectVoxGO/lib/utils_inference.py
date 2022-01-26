@@ -29,9 +29,18 @@ def render_viewpoint(model,
     H, W = HW
     print(H)
     print(W)
+
+    """
+    rays_o, rays_d, viewdirs = get_rays_of_a_view(
+            H, W, K, c2w, ndc, inverse_y=not render_kwargs['inverse_y'],
+            flip_x=cfg.data.flip_x, flip_y=cfg.data.flip_y)
+    """
+    #TODO understand inverse_y
+
     rays_o, rays_d, viewdirs = get_rays_of_a_view(
             H, W, K, c2w, ndc, inverse_y=render_kwargs['inverse_y'],
             flip_x=cfg.data.flip_x, flip_y=cfg.data.flip_y)
+
     keys = ['rgb_marched']
 
     rays_o = rays_o.flatten(0,-2)
@@ -42,11 +51,16 @@ def render_viewpoint(model,
     print('rays_d.shape:', rays_d.shape)
     print('viewdirs.shape:', viewdirs.shape)
 
-    # Needed to reduce batck size here.
+
+    n_batch = 65536 // 16
+    #n_batch = 32768
+    # Needed to reduce batch size here.
     with torch.no_grad():
         render_result_chunks = [
             {k: v for k, v in model(ro, rd, vd, **render_kwargs).items() if k in keys}
-            for ro, rd, vd in zip(rays_o.split(65536, 0), rays_d.split(65536, 0), viewdirs.split(65536, 0))
+            for ro, rd, vd in zip(rays_o.split(n_batch, 0),
+                                  rays_d.split(n_batch, 0),
+                                  viewdirs.split(n_batch, 0))
         ]
         render_result = {
             k: torch.cat([ret[k] for ret in render_result_chunks]).reshape(H,W,-1)

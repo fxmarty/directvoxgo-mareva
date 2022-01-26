@@ -1,4 +1,5 @@
 src/__pycache__/
-DirectVoxGO/logs
-DirectVoxGO/data
+DirectVoxGO/logs/
+DirectVoxGO/data/
 DirectVoxGO/lib/__pycache__/
+DirectVoxGO/__pycache__/

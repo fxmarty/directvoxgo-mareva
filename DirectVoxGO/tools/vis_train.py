@@ -44,6 +44,9 @@ for cam in cam_lst:
         raise NotImplementedError
     cam_frustrm_lst.append(cam_frustrm)
 
+sphere_center =  o3d.geometry.TriangleMesh.create_sphere(radius=0.02)
+cam_frustrm_lst.append(sphere_center)
+
 # Show
 o3d.visualization.draw_geometries([
     o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=xyz_min),
