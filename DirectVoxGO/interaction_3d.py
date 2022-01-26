@@ -4,6 +4,7 @@ import os
 import torch
 
 from lib import dvgo
+from lib.utils_get_center import get_center_object
 from lib.utils_interaction_3D import interaction
 from lib import utils
 
@@ -29,12 +30,14 @@ parser.add_argument("--init",
                     required=True,
                     help='Initialization pose')
 
+parser.add_argument("--coordinates",
+                    type=str,
+                    required=True,
+                    help='Path to a .npz generated with the option `export_coarse_only`')
 
 args = parser.parse_args()
 cfg = mmcv.Config.fromfile(args.config)
 
-
-# init enviroment
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
     device = torch.device('cuda')
@@ -58,6 +61,8 @@ model = utils.load_model(dvgo.DirectVoxGO, ckpt_path).to(device)
 parent_exp_folder = os.path.split(args.config)[0]
 params = np.load(os.path.join(parent_exp_folder, 'params.npz'))
 
+K = params['K']
+HW = params['HW']
 
 render_viewpoints_kwargs = {
     'model': model,
@@ -73,19 +78,23 @@ render_viewpoints_kwargs = {
     },
 }
 
-
-#TODO define
-#pose_path = '/home/felix/Documents/Mines/3A/Option/Mini-projet/directvoxgo-mareva/DirectVoxGO/data/BlendedMVS/Jade/pose/1_0000_00000011.txt'
-
-K = params['K']
-HW = params['HW']
-
+# load the initial pose
 render_pose = np.loadtxt(args.init).astype(np.float32)
 render_pose = torch.Tensor(render_pose)
+
+# compute the coordinates for the center of the object to handle rotations later
+coordinates = np.load(args.coordinates)
+alpha = coordinates['alpha']
+xyz_min = coordinates['xyz_min']
+xyz_max = coordinates['xyz_max']
+
+center = get_center_object(alpha, xyz_min, xyz_max)
+print(f'Object center at position {center}')
 
 interaction(HW=HW,
             render_pose=render_pose,
             K=K,
             cfg=cfg,
             fullscreen=args.fullscreen,
+            center=center,
             **render_viewpoints_kwargs)

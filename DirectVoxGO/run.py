@@ -474,6 +474,7 @@ if __name__=='__main__':
         poses, HW, Ks, i_train = data_dict['poses'], data_dict['HW'], data_dict['Ks'], data_dict['i_train']
         near, far = data_dict['near'], data_dict['far']
         cam_lst = []
+
         for c2w, (H, W), K in zip(poses[i_train], HW[i_train], Ks[i_train]):
             rays_o, rays_d, viewdirs = dvgo.get_rays_of_a_view(
                     H, W, K, c2w, cfg.data.ndc, inverse_y=cfg.data.inverse_y,
@@ -481,9 +482,11 @@ if __name__=='__main__':
             cam_o = rays_o[0,0].cpu().numpy()
             cam_d = rays_d[[0,0,-1,-1],[0,-1,0,-1]].cpu().numpy()
             cam_lst.append(np.array([cam_o, *(cam_o+cam_d*max(near, far*0.05))]))
+
         np.savez_compressed(args.export_bbox_and_cams_only,
-            xyz_min=xyz_min.cpu().numpy(), xyz_max=xyz_max.cpu().numpy(),
-            cam_lst=np.array(cam_lst))
+                            xyz_min=xyz_min.cpu().numpy(),
+                            xyz_max=xyz_max.cpu().numpy(),
+                            cam_lst=np.array(cam_lst))
         print('done')
         sys.exit()
 
@@ -494,7 +497,13 @@ if __name__=='__main__':
             model = utils.load_model(dvgo.DirectVoxGO, ckpt_path).to(device)
             alpha = model.activate_density(model.density).squeeze().cpu().numpy()
             rgb = torch.sigmoid(model.k0).squeeze().permute(1,2,3,0).cpu().numpy()
-        np.savez_compressed(args.export_coarse_only, alpha=alpha, rgb=rgb)
+
+        xyz_min, xyz_max = compute_bbox_by_cam_frustrm(args=args, cfg=cfg, **data_dict)
+        np.savez_compressed(args.export_coarse_only,
+                            alpha=alpha,
+                            rgb=rgb,
+                            xyz_min=xyz_min.cpu().numpy(),
+                            xyz_max=xyz_max.cpu().numpy())
         print('done')
         sys.exit()
 
