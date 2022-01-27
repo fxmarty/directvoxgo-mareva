@@ -24,9 +24,9 @@ where `cameras.txt` hold the intrinsic parameters of the camera and `images.txt`
 To format this data in the format expected by DirectVoxGO implementation, use
 
 ```
-python3 colmap_to_directvoxgo.py --model path/to/model/ --output path/to/output/folder/
+python3 colmap_to_directvoxgo.py --model path/to/model/ --images path/to/images/folder --output path/to/output/folder/
 ```
-where `model/` is the repository holding the `cameras.txt` and `images.txt`. In the output folder, copy as well the images in a folder named `rgb/`.
+where `model/` is the repository holding the `cameras.txt` and `images.txt`, and the image folder is e.g. the one used for the photogrammetry.
 
 ## Create a video around the object
 

@@ -3,6 +3,8 @@ import os
 
 import numpy as np
 
+from shutil import copyfile
+
 from src.cameras_positions import quaternion_to_matrix, build_camera_matrices
 
 
@@ -11,6 +13,11 @@ parser = argparse.ArgumentParser(description='Conversion parser')
 
 parser.add_argument('--model',
                     help='Path to a folder containing images.txt and cameras.txt',
+                    type=str,
+                    required=True)
+
+parser.add_argument('--images',
+                    help='Path to a folder containing the images',
                     type=str,
                     required=True)
 
@@ -85,9 +92,17 @@ pose_path = os.path.join(args.output, 'pose/')
 if not os.path.exists(pose_path):
     os.makedirs(pose_path)
 
+rgb_path = os.path.join(args.output, 'rgb/')
+if not os.path.exists(rgb_path):
+    os.makedirs(rgb_path)
+
 for i, camera in enumerate(cameras):
     print(camera)
     file_name = os.path.join(pose_path, names[i]) + '.txt'
+
+    copyfile(os.path.join(args.images, names[i] + '.jpg'),
+             os.path.join(rgb_path, names[i] + '.jpg'))
+
     with open(file_name, 'w') as f:
         for row in cameras[i]:
             to_write = ' '.join(str(x) for x in row)
