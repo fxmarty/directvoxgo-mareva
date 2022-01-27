@@ -85,9 +85,13 @@ def render_viewpoints(model, render_poses, HW, Ks, ndc, render_kwargs,
         rays_o = rays_o.flatten(0,-2)
         rays_d = rays_d.flatten(0,-2)
         viewdirs = viewdirs.flatten(0,-2)
+
+        n_batch = 65536 // 16
         render_result_chunks = [
             {k: v for k, v in model(ro, rd, vd, **render_kwargs).items() if k in keys}
-            for ro, rd, vd in zip(rays_o.split(65536, 0), rays_d.split(65536, 0), viewdirs.split(65536, 0))
+            for ro, rd, vd in zip(rays_o.split(n_batch, 0),
+                                  rays_d.split(n_batch, 0),
+                                  viewdirs.split(n_batch, 0))
         ]
         render_result = {
             k: torch.cat([ret[k] for ret in render_result_chunks]).reshape(H,W,-1)
@@ -522,8 +526,8 @@ if __name__=='__main__':
         if args.ft_path:
             ckpt_path = args.ft_path
         else:
-            #ckpt_path = os.path.join(cfg.basedir, cfg.expname, 'fine_last.tar')
-            ckpt_path = os.path.join(cfg.basedir, cfg.expname, 'coarse_last.tar')
+            ckpt_path = os.path.join(cfg.basedir, cfg.expname, 'fine_last.tar')
+            #ckpt_path = os.path.join(cfg.basedir, cfg.expname, 'coarse_last.tar')
         ckpt_name = ckpt_path.split('/')[-1][:-4]
         model = utils.load_model(dvgo.DirectVoxGO, ckpt_path).to(device)
         stepsize = cfg.fine_model_and_render.stepsize

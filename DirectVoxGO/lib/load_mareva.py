@@ -57,7 +57,12 @@ def load_mareva_data(basedir):
     K = np.loadtxt(path_intrinsics)
     focal = float(K[0,0])
 
-    render_poses = torch.stack([pose_spherical(angle, -30.0, 4.0) for angle in np.linspace(-180,180,40+1)[:-1]], 0)
+    path_traj = os.path.join(basedir, 'test_traj.txt')
+    if os.path.isfile(path_traj):
+        render_poses = torch.Tensor(np.loadtxt(path_traj).reshape(-1,4,4).astype(np.float32))
+        print('Loaded test_traj.txt')
+    else:
+        render_poses = torch.stack([pose_spherical(angle, -30.0, 4.0) for angle in np.linspace(-180,180,40+1)[:-1]], 0)
 
     return imgs, poses, render_poses, [H, W, focal], K, i_split
 
