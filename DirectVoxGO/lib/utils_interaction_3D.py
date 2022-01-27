@@ -5,6 +5,7 @@ import os
 import torch
 
 import numpy as np
+import open3d as o3d 
 
 from lib.utils_inference import render_viewpoint
 from lib import utils
@@ -42,6 +43,39 @@ def translation(t):
     res = res.float()
     
     return res
+
+
+def render_camera_3d(xyz_min, xyz_max, cam):
+    # Outer aabb
+    aabb_01 = np.array([[0, 0, 0],
+                        [0, 0, 1],
+                        [0, 1, 1],
+                        [0, 1, 0],
+                        [1, 0, 0],
+                        [1, 0, 1],
+                        [1, 1, 1],
+                        [1, 1, 0]])
+    out_bbox = o3d.geometry.LineSet()
+    out_bbox.points = o3d.utility.Vector3dVector(xyz_min + aabb_01 * (xyz_max - xyz_min))
+    out_bbox.colors = o3d.utility.Vector3dVector([[1,0,0] for i in range(12)])
+    out_bbox.lines = o3d.utility.Vector2iVector([[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]])
+    
+    # Cameras
+    cam_frustrm_lst = []
+    
+    cam_frustrm = o3d.geometry.LineSet()
+    cam_frustrm.points = o3d.utility.Vector3dVector(cam)
+    if len(cam) == 5:
+        cam_frustrm.colors = o3d.utility.Vector3dVector([[0,0,0] for i in range(8)])
+        cam_frustrm.lines = o3d.utility.Vector2iVector([[0,1],[0,2],[0,3],[0,4],[1,2],[2,4],[4,3],[3,1]])
+    else:
+        raise NotImplementedError
+    cam_frustrm_lst.append(cam_frustrm)
+    
+    # Show
+    o3d.visualization.draw_geometries([
+        o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=xyz_min),
+        out_bbox, *cam_frustrm_lst])
 
 
 class Pose():
@@ -131,21 +165,41 @@ def interaction(model,
                 print(f'Pressed {char}: {keymap[char]}')
                 print(pose.pose)
                 
-                rgb = render_viewpoint(model=model,
-                                       render_pose=pose.pose,
-                                       HW=HW,
-                                       K=K,
-                                       cfg=cfg,
-                                       **render_viewpoints_kwargs)
+                rgb, rays_o, rays_d, viewdirs = render_viewpoint(
+                                                    model=model,
+                                                    render_pose=pose.pose,
+                                                    HW=HW,
+                                                    K=K,
+                                                    cfg=cfg,
+                                                    **render_viewpoints_kwargs)
                 rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
                 
+                """
                 with open(os.path.join(poses_dir, f'{n_image}.txt'), 'w') as f:
                     for row in pose.pose.cpu().numpy():
                         to_write = ' '.join(str(x) for x in row)
                         f.write(to_write)
                         f.write('\n')
+                """
                 
+                rend_o = rays_o[0,0].cpu().numpy()
+                rend_d = rays_d[[0,0,-1,-1],[0,-1,0,-1]].cpu().numpy()
+                
+                near = render_viewpoints_kwargs['render_kwargs']['near']
+                far = render_viewpoints_kwargs['render_kwargs']['far']
+                
+                cam = np.array([rend_o, *(rend_o+rend_d*max(near, far*0.05))])
+                
+                """
+                print('Before render_camera_3d')
+                render_camera_3d(xyz_min=render_viewpoints_kwargs['xyz_min'],
+                                 xyz_max=render_viewpoints_kwargs['xyz_max'],
+                                 cam=cam)
+                
+                print('Before imshow cv2')
+                """
                 cv2.imshow(window_title, rgb)
+                
                 
                 n_image +=1
     

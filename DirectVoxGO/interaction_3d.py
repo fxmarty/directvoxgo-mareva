@@ -64,20 +64,6 @@ params = np.load(os.path.join(parent_exp_folder, 'params.npz'))
 K = params['K']
 HW = params['HW']
 
-render_viewpoints_kwargs = {
-    'model': model,
-    'ndc': cfg.data.ndc,
-    'render_kwargs': {
-        'near': params['near'],
-        'far': params['far'],
-        'bg': 1 if cfg.data.white_bkgd else 0,
-        'stepsize': stepsize,
-        'inverse_y': cfg.data.inverse_y,
-        'flip_x': cfg.data.flip_x,
-        'flip_y': cfg.data.flip_y,
-    },
-}
-
 # load the initial pose
 render_pose = np.loadtxt(args.init).astype(np.float32)
 render_pose = torch.Tensor(render_pose)
@@ -90,6 +76,22 @@ xyz_max = coordinates['xyz_max']
 
 center = get_center_object(alpha, xyz_min, xyz_max)
 print(f'Object center at position {center}')
+
+render_viewpoints_kwargs = {
+    'model': model,
+    'ndc': cfg.data.ndc,
+    'xyz_min': xyz_min,
+    'xyz_max': xyz_max,
+    'render_kwargs': {
+        'near': params['near'],
+        'far': params['far'],
+        'bg': 1 if cfg.data.white_bkgd else 0,
+        'stepsize': stepsize,
+        'inverse_y': cfg.data.inverse_y,
+        'flip_x': cfg.data.flip_x,
+        'flip_y': cfg.data.flip_y,
+    },
+}
 
 interaction(HW=HW,
             render_pose=render_pose,
