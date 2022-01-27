@@ -32,9 +32,12 @@ for filename in sorted(os.listdir(args.folder)):
         n_vertical_shot = int(n_vertical_shot)
 
         # don't use the very top shots where all cameras are at the same position
-        if (n_horizontal_shot % 4 == 0
-            and n_vertical_shot % 2 == 0
-            and n_vertical_shot != 10):
-            print(f'Copying {filename}...')
-            copyfile(os.path.join(args.folder, filename),
-                     os.path.join(output_folder, filename))
+        if n_vertical_shot % 2 == 1 and n_vertical_shot != 9:
+            if n_horizontal_shot % 3 == 0 and n_vertical_shot <= 5:
+                print(f'Copying {filename}...')
+                copyfile(os.path.join(args.folder, filename),
+                        os.path.join(output_folder, filename))
+            if n_horizontal_shot % 4 == 0 and n_vertical_shot > 5:
+                print(f'Copying {filename}...')
+                copyfile(os.path.join(args.folder, filename),
+                        os.path.join(output_folder, filename))
