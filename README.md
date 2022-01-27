@@ -71,6 +71,6 @@ The controls are:
 
 Use `q` to exit the window gracefully.
 
-## Authors
+## Authors
 
-This work was done by Jingjing Hong and Félix Marty as part of a one week long course at Mines Paris under the supervision of Jean-Emmanuel Deschaud.
+This work was done by Jingjing Huang and Félix Marty as part of a one week long course at Mines Paris under the supervision of Jean-Emmanuel Deschaud.
