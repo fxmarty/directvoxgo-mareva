@@ -70,3 +70,7 @@ The controls are:
 * 1 <-> 2
 
 Use `q` to exit the window gracefully.
+
+## Authors
+
+This work was done by Jingjing Hong and Félix Marty as part of a one week long course at Mines Paris under the supervision of Jean-Emmanuel Deschaud.
