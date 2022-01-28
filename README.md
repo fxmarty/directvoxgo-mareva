@@ -43,10 +43,10 @@ to generate coarse density data used to find the center of the object.
 Then, generate a random trajectory using a Bézier curve with
 
 ```
-python3 generate_bezier_curve.py --output output_folder/ --init path/to/initial_pose.txt --coordinates coarse_data.npz
+python3 generate_bezier_curve.py --output data/dataset/ --init path/to/initial_pose.txt --coordinates coarse_data.npz
 ```
 
-where the initial pose is used at the beginning of the trajectory, and can for example be one of the pose from the test set.
+where the initial pose is used at the beginning of the trajectory, and can for example be one of the pose from the test set.  Here `--output` should be the folder where the training data is stored, so that a `test_traj.txt` file can be saved there with the poses to be used for the video.
 
 The video can be generated with
 
